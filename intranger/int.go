@@ -1,7 +1,6 @@
-package ranger
+package intranger
 
 import (
-	"encoding/json"
 	"fmt"
 	"strconv"
 )
@@ -9,11 +8,6 @@ import (
 type intRanger struct {
 	min int
 	max int
-}
-
-type intRangerJSON struct {
-	Min int `json:"min"`
-	Max int `json:"max"`
 }
 
 func IntRanger(min, max int) intRanger {
@@ -54,27 +48,6 @@ func (ranger intRanger) In(r intRanger) bool {
 	return ranger.min >= r.min && ranger.max <= r.max
 }
 
-func (ranger intRanger) toJSON() intRangerJSON {
-	return intRangerJSON{
-		Min: ranger.min,
-		Max: ranger.max,
-	}
-}
-
-func (ranger intRanger) MarshalJSON() ([]byte, error) {
-	data, err := json.Marshal(ranger.toJSON())
-	return data, err
-}
-
-func (ranger *intRanger) UnmarshalJSON(p []byte) error {
-	var jsonRanger intRangerJSON
-	err := json.Unmarshal(p, &jsonRanger)
-	if err != nil {
-		return err
-	}
-	*ranger = IntRanger(jsonRanger.Min, jsonRanger.Max)
-	return nil
-}
 
 func (ranger intRanger) Iter() intRangerIterator {
 	return ranger.IterWithStep(1)
@@ -89,32 +62,6 @@ func (ranger intRanger) IterWithStep(step int) intRangerIterator {
 	}
 }
 
-func (ranger intRangerIterator) Shift(off int) intRanger {
+func (ranger intRanger) Shift(off int) intRanger {
 	return IntRanger(ranger.min+off, ranger.max+off)
-}
-
-type intRangerIterator struct {
-	intRanger
-	value   int
-	step    int
-	counter int
-}
-
-func (iter intRangerIterator) String() string {
-	return strconv.Itoa(iter.Value())
-}
-
-func (iter *intRangerIterator) Next() bool {
-	min, max := iter.Bounds()
-	nextVal := iter.counter*iter.step + min
-	if nextVal <= max {
-		iter.value = nextVal
-		iter.counter++
-		return true
-	}
-	return false
-}
-
-func (iter intRangerIterator) Value() int {
-	return iter.value
 }
